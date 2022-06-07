@@ -57,7 +57,7 @@ function NFCTag(data) {
 
     if (self.tagWritten == true) {
       console.log("Saving tag to flash");
-      //require("Storage").write(self.filename, this._data);
+      require("Storage").write(self.filename, self._data);
       self.tagWritten = false;
     }
 
@@ -556,7 +556,9 @@ function initialize() {
                 //console.log("Write to start: " + startIdx);
                 //console.log("Write size: " + dataSize);
 
+                let filename = "tag" + slot + ".bin"; // save written tags locally to persist shutdowns
                 tags[slot].buffer.set(new Uint8Array(evt.data, 3, dataSize), startIdx);
+                require("Storage").write(filename, tags[slot].buffer);
               }
             })(); break;
 
