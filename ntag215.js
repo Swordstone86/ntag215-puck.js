@@ -552,13 +552,38 @@ function initialize() {
 
               //store data if it fits into memory
               if ((startIdx + dataSize) <= 572) {
-                //console.log("Write to slot: " + slot);
-                //console.log("Write to start: " + startIdx);
-                //console.log("Write size: " + dataSize);
-
                 let filename = "tag" + slot + ".bin"; // save written tags locally to persist shutdowns
                 tags[slot].buffer.set(new Uint8Array(evt.data, 3, dataSize), startIdx);
                 require("Storage").write(filename, tags[slot].buffer);
+              }
+            })(); break;
+
+            case 0x04: (function() {//Get bin list
+              var bins = require("Storage").list(/.*\.bin/);
+              response[serviceId][returnCharacteristic].value = new Uint8Array(bins.split("").map(x => x.charCodeAt(0)));
+              NRF.updateServices(response);
+            })(); break;
+
+            case 0x05: (function() {//Load <Slot> <Filename>
+              var nameLength = evt.data.length - 2;
+              var slot = evt.data[1] < tags.length ? evt.data[1] : currentTag;
+
+              var filenameBytes = new Uint8Array(evt.data, 2, nameLength);
+              var filename = String.fromCharCode.apply(null, filenameBytes); // do this because for some reason TextDecode isn't here
+
+              console.log("Loading " + filename);
+              var buffer = storage.readArrayBuffer(filename);
+
+              if (buffer) {
+                console.log("Loaded " + filename);
+                var output = new Uint8Array(buffer.length);
+                for (var buffPos = 0; buffPos < buffer.length; buffPos++) {
+                  output[buffPos] = buffer[buffPos];
+                }
+          
+                let localFile = "tag" + slot + ".bin"; // save written tags locally to persist shutdowns
+                tags[slot].buffer = output;
+                require("Storage").write(localFile, tags[slot].buffer);
               }
             })(); break;
 

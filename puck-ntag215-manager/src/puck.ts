@@ -229,6 +229,44 @@ export class Puck {
     }
   }
 
+  async loadFromFlash(filename: string) {
+    if (!this.isConnected) {
+      throw new Error("Puck is not connected")
+    }
+
+    const info = await this.getSlotInformation()
+
+    const command = new Uint8Array(filename.length + 2)
+    var filenameBytes = Uint8Array.from(filename.split("").map(x => x.charCodeAt(0)))
+    command[0] = Puck.Command.Load
+    command[1] = info.currentSlot
+    command.set(filenameBytes, 2)
+
+    this.log("Getting list of tags stored...")
+    await this.commandCharacteristic.writeValueWithResponse(command)
+    this.log("Tag loaded successfully (probably)")
+    await this.restartNfc(info.currentSlot)
+  }
+
+  async getBinsOnFlash(): Promise<Array<string>> {
+    if (!this.isConnected) {
+      throw new Error("Puck is not connected")
+    }
+
+    const command = [Puck.Command.GetBins]
+
+    this.log("Getting list of tags stored...")
+    await this.commandCharacteristic.writeValueWithResponse(Uint8Array.from(command))
+    var binsBytes = (await this.returnCharacteristic.readValue()).buffer
+    this.log(binsBytes);
+    var binString = new TextDecoder("utf-8").decode(binsBytes)
+    this.log(binString);
+    var bins = binString.split(';')
+
+    this.log(bins);
+    return bins;
+  }
+
   async moveSlot(from: number, to: number) {
     if (!this.isConnected) {
       throw new Error("Puck is not connected")
@@ -304,6 +342,8 @@ export namespace Puck {
     SlotInformation = 0x01,
     Read = 0x02,
     Write = 0x03,
+    GetBins = 0x04,
+    Load = 0x05,
     MoveSlot = 0xFD,
     EnableUart = 0xFE,
     RestartNFC = 0xFF

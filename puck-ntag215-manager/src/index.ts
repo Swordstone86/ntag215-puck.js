@@ -5,7 +5,7 @@ import { showModal, hideModal, setModal } from "./modal"
 import { saveData, readFile } from "./fileHelpers"
 
 const anyWindow = (window as any)
-const blankTag = new Uint8Array(require('arraybuffer-loader!../NTAG215_blank.bin'))
+const blankTag = new Uint8Array(require('arraybuffer-loader!../empty_slot.bin'))
 const puck = anyWindow.puck = new Puck(console.log, console.warn, console.error)
 
 $(() => {
@@ -96,10 +96,24 @@ $(() => {
       }, 572)
     })
 
+    element.find("a.slot-load-link").on("click", async (e) => {
+      e.preventDefault()
+
+      try {
+        await showModal("Please Wait", `Loading list of tags from flash`, true)
+        var bins = await puck.getBinsOnFlash()
+        //await puck.loadFromFlash(bins[0]) // REPLACE THIS LATER
+        await updateSlotElement(slot, element)
+      } catch (error) {
+        await showModal("Error", error)
+      }
+    })
+
     element.find("a.slot-clear-link").on("click", async (e) => {
       e.preventDefault()
 
       await writeSlot(slot, blankTag, element)
+      await updateSlotElement(slot, element)
     })
 
     element.find("a.slot-select-link").on("click", async (e) => {
