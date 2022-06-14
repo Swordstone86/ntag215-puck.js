@@ -552,15 +552,19 @@ function initialize() {
 
               //store data if it fits into memory
               if ((startIdx + dataSize) <= 572) {
-                let filename = "tag" + slot + ".bin"; // save written tags locally to persist shutdowns
                 tags[slot].buffer.set(new Uint8Array(evt.data, 3, dataSize), startIdx);
+              }
+
+              // if StartPage is 140, this is the last page of the tag, so save the file now
+              if (evt.data[2] == 140) {
+                let filename = "tag" + slot + ".bin"; // save newly uploaded tags locally to persist shutdowns
                 require("Storage").write(filename, tags[slot].buffer);
               }
             })(); break;
 
             case 0x04: (function() {//Get bin list
               var bins = require("Storage").list(/.*\.bin/);
-              response[serviceId][returnCharacteristic].value = new Uint8Array(bins.split("").map(x => x.charCodeAt(0)));
+              response[serviceId][returnCharacteristic].value = bins.join(';');
               NRF.updateServices(response);
             })(); break;
 
