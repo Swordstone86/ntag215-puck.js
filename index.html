@@ -1,7 +1,7 @@
 <html><head><title>Puck NTAG215 Management</title><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes"><meta name="msapplication-config" content="./browserconfig.xml"><link rel="manifest" href="./site.webmanifest"><!-- Global site tag (gtag.js) - Google Analytics--><script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-50411-3"></script><script>window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-gtag('config', 'UA-50411-3');</script><link href="d4fed3b41c6baa610ff7.css" rel="stylesheet"></head><body><a class="github-corner" href="https://github.com/DanTheMan827/ntag215-puck.js" aria-label="View source on GitHub" style="      "><svg width="80" height="80" viewbox="0 0 250 250" style="fill: #fff; color: #151513; position: absolute; top: 0; border: 0; right: 0" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path class="octo-arm" d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px"></path><path class="octo-body" d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor"></path></svg></a><div class="container" id="mainContainer"><a class="btn btn-default btn-lg btn-block well" id="puckConnect">Connect to Puck</a><a class="btn btn-default btn-lg btn-block well" id="puckDisconnect">Disconnect from Puck</a><a class="btn btn-default btn-lg btn-block well" id="puckName">Change Name</a><a class="btn btn-default btn-lg btn-block well" id="puckUart">Enable UART</a><div id="readme"><h1>How to use</h1>
+gtag('config', 'UA-50411-3');</script><link href="ecbbf3855405deb0b7ad.css" rel="stylesheet"></head><body><a class="github-corner" href="https://github.com/DanTheMan827/ntag215-puck.js" aria-label="View source on GitHub" style="      "><svg width="80" height="80" viewbox="0 0 250 250" style="fill: #fff; color: #151513; position: absolute; top: 0; border: 0; right: 0" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path class="octo-arm" d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px"></path><path class="octo-body" d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor"></path></svg></a><div class="container" id="mainContainer"><a class="btn btn-default btn-lg btn-block well" id="puckConnect">Connect to Puck</a><a class="btn btn-default btn-lg btn-block well" id="puckDisconnect">Disconnect from Puck</a><a class="btn btn-default btn-lg btn-block well" id="puckName">Change Name</a><a class="btn btn-default btn-lg btn-block well" id="puckUart">Enable UART</a><div id="readme"><h1>How to use</h1>
 <p>First you'll need to write <a href="https://raw.githubusercontent.com/DanTheMan827/ntag215-puck.js/master/ntag215.js">this .js file</a> to your puck.js with the <a href="https://www.espruino.com/ide/">Espruino IDE</a>, then after you do that you'll be able to connect with this page by clicking connect to puck.</p>
 <p>If you ever want to put the puck back into programming mode, you can click the enable uart button that appears after connecting.</p>
 <p><strong>Note:</strong> For best compatibility, you'll want to enable code minification, mangle, and pretokenise code before upload in the <a href="https://www.espruino.com/ide/">Espruino IDE</a></p>
@@ -64,7 +64,7 @@ function NFCTag(data) {
 
     if (self.tagWritten == true) {
       console.log(&quot;Saving tag to flash&quot;);
-      //require(&quot;Storage&quot;).write(self.filename, this._data);
+      require(&quot;Storage&quot;).write(self.filename, self._data);
       self.tagWritten = false;
     }
 
@@ -559,11 +559,42 @@ function initialize() {
 
               //store data if it fits into memory
               if ((startIdx + dataSize) &lt;= 572) {
-                //console.log(&quot;Write to slot: &quot; + slot);
-                //console.log(&quot;Write to start: &quot; + startIdx);
-                //console.log(&quot;Write size: &quot; + dataSize);
-
                 tags[slot].buffer.set(new Uint8Array(evt.data, 3, dataSize), startIdx);
+              }
+
+              // if StartPage is 140, this is the last page of the tag, so save the file now
+              if (evt.data[2] == 140) {
+                let filename = &quot;tag&quot; + slot + &quot;.bin&quot;; // save newly uploaded tags locally to persist shutdowns
+                require(&quot;Storage&quot;).write(filename, tags[slot].buffer);
+              }
+            })(); break;
+
+            case 0x04: (function() {//Get bin list
+              var bins = require(&quot;Storage&quot;).list(/.*\.bin/);
+              response[serviceId][returnCharacteristic].value = bins.join(&#39;;&#39;);
+              NRF.updateServices(response);
+            })(); break;
+
+            case 0x05: (function() {//Load &lt;Slot&gt; &lt;Filename&gt;
+              var nameLength = evt.data.length - 2;
+              var slot = evt.data[1] &lt; tags.length ? evt.data[1] : currentTag;
+
+              var filenameBytes = new Uint8Array(evt.data, 2, nameLength);
+              var filename = String.fromCharCode.apply(null, filenameBytes); // do this because for some reason TextDecode isn&#39;t here
+
+              console.log(&quot;Loading &quot; + filename);
+              var buffer = storage.readArrayBuffer(filename);
+
+              if (buffer) {
+                console.log(&quot;Loaded &quot; + filename);
+                var output = new Uint8Array(buffer.length);
+                for (var buffPos = 0; buffPos &lt; buffer.length; buffPos++) {
+                  output[buffPos] = buffer[buffPos];
+                }
+          
+                let localFile = &quot;tag&quot; + slot + &quot;.bin&quot;; // save written tags locally to persist shutdowns
+                tags[slot].buffer = output;
+                require(&quot;Storage&quot;).write(localFile, tags[slot].buffer);
               }
             })(); break;
 
@@ -613,4 +644,4 @@ function initialize() {
 }
 
 setUartWatch();
-</textarea></div><div id="slotsContainer"></div><script async="" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><!-- Horizontal Responsive--><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5924968361554698" data-ad-slot="1453590776" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><script src="d4fed3b41c6baa610ff7.js"></script></body></html>
+</textarea></div><div id="slotsContainer"></div><script async="" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><!-- Horizontal Responsive--><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5924968361554698" data-ad-slot="1453590776" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><script src="ecbbf3855405deb0b7ad.js"></script></body></html>
