@@ -100,9 +100,10 @@ $(() => {
       e.preventDefault()
 
       try {
-        await showModal("Please Wait", `Loading list of tags from flash`, true)
+        await showModal("Please Wait", `Loading first tag stored in flash`, true)
         var bins = await puck.getBinsOnFlash()
-        //await puck.loadFromFlash(bins[0]) // REPLACE THIS LATER
+        await puck.loadFromFlash(slot, bins[0]) // REPLACE THIS LATER
+        await hideModal()
         await updateSlotElement(slot, element)
       } catch (error) {
         await showModal("Error", error)

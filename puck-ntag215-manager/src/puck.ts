@@ -229,17 +229,20 @@ export class Puck {
     }
   }
 
-  async loadFromFlash(filename: string) {
+  async loadFromFlash(slot: number = null, filename: string) {
     if (!this.isConnected) {
       throw new Error("Puck is not connected")
     }
-
     const info = await this.getSlotInformation()
+
+    if (!slot) {
+      slot = info.currentSlot
+    }
 
     const command = new Uint8Array(filename.length + 2)
     var filenameBytes = Uint8Array.from(filename.split("").map(x => x.charCodeAt(0)))
     command[0] = Puck.Command.Load
-    command[1] = info.currentSlot
+    command[1] = slot
     command.set(filenameBytes, 2)
 
     this.log("Getting list of tags stored...")

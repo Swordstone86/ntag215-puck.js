@@ -13,4 +13,4 @@ Things to be implemented:
 - Full implementation of page locking
 - Password protection
 
-You can find a web app for managing the tags at https://dantheman827.github.io/ntag215-puck.js/
+You can find a web app for managing the tags at https://app.omniibo.com/
