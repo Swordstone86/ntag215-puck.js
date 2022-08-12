@@ -5,3 +5,5 @@ First you'll need to write [this .js file](https://raw.githubusercontent.com/Swo
 If you ever want to put the puck back into programming mode, you can click the enable uart button that appears after connecting.
 
 **Note:** For best compatibility, you'll want to enable code minification, mangle, and pretokenise code before upload in the [Espruino IDE](https://www.espruino.com/ide/)
+
+Like this app? [Buy the original developer, DanTheMan827, a coffee!](https://ko-fi.com/dantheman827)
