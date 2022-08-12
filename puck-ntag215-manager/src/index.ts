@@ -96,7 +96,7 @@ $(() => {
       }, 572)
     })
 
-    element.find("a.slot-load-link").on("click", async (e) => {
+    /*element.find("a.slot-load-link").on("click", async (e) => {
       e.preventDefault()
 
       try {
@@ -108,7 +108,7 @@ $(() => {
       } catch (error) {
         await showModal("Error", error)
       }
-    })
+    })*/
 
     element.find("a.slot-clear-link").on("click", async (e) => {
       e.preventDefault()
