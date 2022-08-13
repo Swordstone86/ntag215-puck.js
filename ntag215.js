@@ -572,7 +572,6 @@ function initialize() {
                 tempTag.set(new Uint8Array(evt.data, 3, dataSize), startIdx);
               }
 
-              storage.write("testfile.bin", tempTag);
               saveTagToFlash(slot, tempTag);
             })(); break;
 
