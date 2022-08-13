@@ -318,7 +318,7 @@ function getFilenameFromSlot(slot) {
 
 function getTagFromFlash(slot) {
   let filename = getFilenameFromSlot(slot);
-  let tag = new Uint8Array(storage.readArrayBuffer(filename));
+  let tag = getBufferClone(storage.readArrayBuffer(filename));
   return tag;
 }
 
@@ -335,11 +335,7 @@ function initializeTags(numTags) {
 
     if (buffer) {
       console.log("Loaded " + filename);
-      let output = new Uint8Array(buffer.length);
-      for (let buffPos = 0; buffPos < buffer.length; buffPos++) {
-        output[buffPos] = buffer[buffPos];
-      }
-      tempTag = output;
+      tempTag = getBufferClone(buffer);
     } else {
       tempTag[3] = 0x88;
       tempTag.set([0x48, 0x00, 0x00, 0xE1, 0x10, 0x3E, 0x00, 0x03, 0x00, 0xFE], 0x09);
@@ -363,6 +359,17 @@ function getTagInfo(slot){
   output.set(tagInSlot.slice(96, 128), 48);
 
   return output;
+}
+
+function getBufferClone(buffer){
+  if (buffer) {
+    var output = new Uint8Array(buffer.length);
+    for (var buffPos = 0; buffPos < buffer.length; buffPos++) {
+      output[buffPos] = buffer[buffPos];
+    }
+
+    return output;
+  }
 }
 
 function setUartWatch(){
@@ -483,7 +490,7 @@ function initialize() {
   ];
   */
 
-  NRF.setAdvertising({}, { name: new Uint8Array(storage.readArrayBuffer("puck-name")) });
+  NRF.setAdvertising({}, { name: getBufferClone(storage.readArrayBuffer("puck-name")) });
   if (!enableUart) {
     const serviceId = "78290001-d52e-473f-a9f4-f03da7c67dd1";
     const commandCharacteristic = "78290002-d52e-473f-a9f4-f03da7c67dd1";
@@ -558,18 +565,15 @@ function initialize() {
               var startIdx = evt.data[2] * 4;
               var dataSize = evt.data.length - 3;
               var slot = evt.data[1] < NUM_TAGS ? evt.data[1] : currentSlot;
-              let tempTag = getTagFromFlash(slot)
+              var tempTag = getTagFromFlash(slot);
 
               //store data if it fits into memory
               if ((startIdx + dataSize) <= 572) {
                 tempTag.set(new Uint8Array(evt.data, 3, dataSize), startIdx);
               }
 
-              // if StartPage is 140, this is the last page of the tag, so save the file now
-              if (evt.data[2] == 140) {
-                let filename = "tag" + slot + ".bin"; // save newly uploaded tags locally to persist shutdowns
-                storage.write(filename, tempTag);
-              }
+              storage.write("testfile.bin", tempTag);
+              saveTagToFlash(slot, tempTag);
             })(); break;
 
             case 0xFD: (function() {//Move slot <From> <To>
@@ -600,7 +604,7 @@ function initialize() {
 
     services[serviceId][nameCharacteristic] = {
       maxLen: 20,
-      value: new Uint8Array(storage.readArrayBuffer("puck-name")),
+      value: getBufferClone(storage.readArrayBuffer("puck-name")),
       readable : true,
       writable : true,
       indicate: false,
@@ -610,7 +614,7 @@ function initialize() {
         } else {
           storage.erase("puck-name");
         }
-        NRF.setAdvertising({}, { name: new Uint8Array(storage.readArrayBuffer("puck-name")) });
+        NRF.setAdvertising({}, { name: getBufferClone(storage.readArrayBuffer("puck-name")) });
       }
     };
 
