@@ -25,6 +25,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+const NUM_TAGS = 14;
+var storage = require("Storage");
+var currentSlot = 0;
+var enableUart = false;
+var currentTag;
+var changeTag;
+
 function NFCTag(data) {
   this.setData(data);
   this.authenticated = false;
@@ -37,10 +44,10 @@ function NFCTag(data) {
   var self = this;
 
   NRF.on('NFCon', function nfcOn() {
-    if (currentTag < 7) {
-      LED1.write(currentTag + 1 & 1);
-      LED2.write(currentTag + 1 & 2);
-      LED3.write(currentTag + 1 & 4);
+    if (currentSlot < 7) {
+      LED1.write(currentSlot + 1 & 1);
+      LED2.write(currentSlot + 1 & 2);
+      LED3.write(currentSlot + 1 & 4);
     }
   });
 
@@ -57,7 +64,7 @@ function NFCTag(data) {
 
     if (self.tagWritten == true) {
       console.log("Saving tag to flash");
-      require("Storage").write(self.filename, self._data);
+      storage.write(self.filename, self._data);
       self.tagWritten = false;
     }
 
@@ -276,11 +283,15 @@ NFCTag.prototype = {
 
     //re-start
     var header = NRF.nfcStart(new Uint8Array([data[0], data[1], data[2], data[4], data[5], data[6], data[7]]));
+
+    //store UID/BCC
+    this._data.set(header, 0);
   },
   getData: function getData() {
     return this._data;
   }
 };
+
 NFCTag.prototype._unrestrictedCallbacks = {
   type: function() {
     return "unrestricted";
@@ -301,59 +312,55 @@ NFCTag.prototype._unrestrictedCallbacks = {
   0x93: NFCTag.prototype._callbacks[0x93]
 };
 
-var storage = require("Storage");
-var tags = (function() {
-  var data = [];
+function getFilenameFromSlot(slot) {
+  return "tag" + slot + ".bin";
+}
 
-  for (var i = 0; i < 14; i++) {
-    var filename = "tag" + i + ".bin";
-    data.push({});
+function getTagFromFlash(slot) {
+  let filename = getFilenameFromSlot(slot);
+  let tag = new Uint8Array(storage.readArrayBuffer(filename));
+  return tag;
+}
 
-    var buffer = storage.readArrayBuffer(filename);
+function saveTagToFlash(slot, data) {
+  let filename = getFilenameFromSlot(slot);
+  storage.write(filename, data);
+}
+
+function initializeTags(numTags) {
+  for (var i = 0; i < numTags; i++) {
+    let filename = getFilenameFromSlot(i);
+    let tempTag = new Uint8Array(572);
+    let buffer = storage.readArrayBuffer(filename);
 
     if (buffer) {
       console.log("Loaded " + filename);
-      var output = new Uint8Array(buffer.length);
-      for (var buffPos = 0; buffPos < buffer.length; buffPos++) {
+      let output = new Uint8Array(buffer.length);
+      for (let buffPos = 0; buffPos < buffer.length; buffPos++) {
         output[buffPos] = buffer[buffPos];
       }
-
-      data[i].buffer = output;
+      tempTag = output;
     } else {
-      data[i].buffer = new Uint8Array(572);
-      data[i].buffer[3] = 0x88;
-      data[i].buffer.set([0x48, 0x00, 0x00, 0xE1, 0x10, 0x3E, 0x00, 0x03, 0x00, 0xFE], 0x09);
-      data[i].buffer.set([0xBD, 0x04, 0x00, 0x00, 0xFF, 0x00, 0x05], 0x20B);
-    }
-  }
-
-  return data;
-})();
-
-function getBufferClone(buffer){
-  if (buffer) {
-    var output = new Uint8Array(buffer.length);
-    for (var buffPos = 0; buffPos < buffer.length; buffPos++) {
-      output[buffPos] = buffer[buffPos];
+      tempTag[3] = 0x88;
+      tempTag.set([0x48, 0x00, 0x00, 0xE1, 0x10, 0x3E, 0x00, 0x03, 0x00, 0xFE], 0x09);
+      tempTag.set([0xBD, 0x04, 0x00, 0x00, 0xFF, 0x00, 0x05], 0x20B);
     }
 
-    return output;
+    saveTagToFlash(i, tempTag);
   }
+  currentTag = new NFCTag(getTagFromFlash(currentSlot));
+  currentTag.filename = getFilenameFromSlot(currentSlot);
 }
-
-var currentTag = 0;
-var tag;
-var changeTag;
-var enableUart = false;
 
 function getTagInfo(slot){
   var output = Uint8Array(80);
-  output.set(tags[slot].buffer.slice(0, 8), 0);
+  var tagInSlot = getTagFromFlash(slot);
 
-  output.set(tags[slot].buffer.slice(16, 24), 8);
-  output.set(tags[slot].buffer.slice(32, 52), 20);
-  output.set(tags[slot].buffer.slice(84, 92), 40);
-  output.set(tags[slot].buffer.slice(96, 128), 48);
+  output.set(tagInSlot.slice(0, 8), 0);
+  output.set(tagInSlot.slice(16, 24), 8);
+  output.set(tagInSlot.slice(32, 52), 20);
+  output.set(tagInSlot.slice(84, 92), 40);
+  output.set(tagInSlot.slice(96, 128), 48);
 
   return output;
 }
@@ -405,14 +412,13 @@ function setInitWatch() {
   }, BTN, { repeat: false, edge: "rising", debounce: 5000 });
 }
 
-tag = new NFCTag(tags[currentTag].buffer);
-tag.filename = "tag" + currentTag + ".bin";
-
 function initialize() {
   LED1.write(0);
   LED2.write(0);
   LED3.write(0);
   clearWatch();
+
+  initializeTags(NUM_TAGS);
 
   var changeTagTimeout = null;
 
@@ -423,12 +429,12 @@ function initialize() {
     }
 
     NRF.nfcStop();
-    currentTag = slot;
+    currentSlot = slot;
 
-    if (currentTag < 7) {
-      LED1.write(currentTag + 1 & 1);
-      LED2.write(currentTag + 1 & 2);
-      LED3.write(currentTag + 1 & 4);
+    if (currentSlot < 7) {
+      LED1.write(currentSlot + 1 & 1);
+      LED2.write(currentSlot + 1 & 2);
+      LED3.write(currentSlot + 1 & 4);
     }
 
     changeTagTimeout = setTimeout(function() {
@@ -436,14 +442,16 @@ function initialize() {
       LED2.write(0);
       LED3.write(0);
 
-      tag.filename = "tag" + currentTag + ".bin";
-      tag.setData(tags[slot].buffer);
+      currentTag.filename = "tag" + currentSlot + ".bin";
+      let newTag = getTagFromFlash(currentSlot);
+      currentTag.setData(newTag);
       changeTagTimeout = null;
     }, 200);
   };
 
-  tag.filename = "tag" + currentTag + ".bin";
-  tag.setData(tags[currentTag].buffer);
+  currentTag.filename = "tag" + currentSlot + ".bin";
+  let newTag = getTagFromFlash(currentSlot);
+  currentTag.setData(newTag);
 
   setWatch(function() {
     clearWatch();
@@ -454,7 +462,7 @@ function initialize() {
   }, BTN, { repeat: false, edge: "rising", debounce: 5000 });
 
   setWatch(function() {
-    changeTag(++currentTag >= 7 ? 0 : currentTag);
+    changeTag(++currentSlot >= 7 ? 0 : currentSlot);
   }, BTN, { repeat: true, edge: "falling", debounce: 50 });
 
   /**
@@ -475,7 +483,7 @@ function initialize() {
   ];
   */
 
-  NRF.setAdvertising({}, { name: getBufferClone(storage.readArrayBuffer("puck-name")) });
+  NRF.setAdvertising({}, { name: new Uint8Array(storage.readArrayBuffer("puck-name")) });
   if (!enableUart) {
     const serviceId = "78290001-d52e-473f-a9f4-f03da7c67dd1";
     const commandCharacteristic = "78290002-d52e-473f-a9f4-f03da7c67dd1";
@@ -515,7 +523,7 @@ function initialize() {
             case 0x01: (function() {//Slot Information <Slot>
               if (evt.data.length > 1) {
                 //Returns a subset of data for identifying
-                var slot = evt.data[1] < tags.length ? evt.data[1] : currentTag;
+                var slot = evt.data[1] < NUM_TAGS ? evt.data[1] : currentSlot;
                 var data = getTagInfo(slot);
                 response[serviceId][returnCharacteristic].value = Uint8Array(data.length + 2);
 
@@ -524,7 +532,7 @@ function initialize() {
                 response[serviceId][returnCharacteristic].value.set(data, 2);
               } else {
                 //Returns 0x01 <Current Slot> <Slot Count>
-                response[serviceId][returnCharacteristic].value = [0x01, currentTag, tags.length];
+                response[serviceId][returnCharacteristic].value = [0x01, currentSlot, NUM_TAGS];
               }
               NRF.updateServices(response);
             })(); break;
@@ -534,8 +542,9 @@ function initialize() {
               //Returns 0x02 <Slot> <StartPage> <PageCount> <Data>
               var startIdx = evt.data[2] * 4;
               var dataSize = evt.data[3] * 4;
-              var slot = evt.data[1] < tags.length ? evt.data[1] : currentTag;
-              var sourceData = tags[slot].buffer.slice(startIdx, startIdx + dataSize);
+              var slot = evt.data[1] < NUM_TAGS ? evt.data[1] : currentSlot;
+              let tempTag = getTagFromFlash(slot);
+              var sourceData = tempTag.slice(startIdx, startIdx + dataSize);
               //console.log("Reading from slot: " + slot);
               //console.log("Read from " + startIdx + " - " + (startIdx + dataSize));
               response[serviceId][returnCharacteristic].value = Uint8Array(dataSize + 4);
@@ -548,55 +557,28 @@ function initialize() {
             case 0x03: (function() {//Write <Slot> <StartPage> <Data>
               var startIdx = evt.data[2] * 4;
               var dataSize = evt.data.length - 3;
-              var slot = evt.data[1] < tags.length ? evt.data[1] : currentTag;
+              var slot = evt.data[1] < NUM_TAGS ? evt.data[1] : currentSlot;
+              let tempTag = getTagFromFlash(slot)
 
               //store data if it fits into memory
               if ((startIdx + dataSize) <= 572) {
-                tags[slot].buffer.set(new Uint8Array(evt.data, 3, dataSize), startIdx);
+                tempTag.set(new Uint8Array(evt.data, 3, dataSize), startIdx);
               }
 
               // if StartPage is 140, this is the last page of the tag, so save the file now
               if (evt.data[2] == 140) {
                 let filename = "tag" + slot + ".bin"; // save newly uploaded tags locally to persist shutdowns
-                require("Storage").write(filename, tags[slot].buffer);
-              }
-            })(); break;
-
-            case 0x04: (function() {//Get bin list
-              var bins = require("Storage").list(/.*\.bin/);
-              response[serviceId][returnCharacteristic].value = bins.join(';');
-              NRF.updateServices(response);
-            })(); break;
-
-            case 0x05: (function() {//Load <Slot> <Filename>
-              var nameLength = evt.data.length - 2;
-              var slot = evt.data[1] < tags.length ? evt.data[1] : currentTag;
-
-              var filenameBytes = new Uint8Array(evt.data, 2, nameLength);
-              var filename = String.fromCharCode.apply(null, filenameBytes); // do this because for some reason TextDecode isn't here
-
-              console.log("Loading " + filename);
-              var buffer = storage.readArrayBuffer(filename);
-
-              if (buffer) {
-                console.log("Loaded " + filename);
-                var output = new Uint8Array(buffer.length);
-                for (var buffPos = 0; buffPos < buffer.length; buffPos++) {
-                  output[buffPos] = buffer[buffPos];
-                }
-          
-                let localFile = "tag" + slot + ".bin"; // save written tags locally to persist shutdowns
-                tags[slot].buffer = output;
-                require("Storage").write(localFile, tags[slot].buffer);
+                storage.write(filename, tempTag);
               }
             })(); break;
 
             case 0xFD: (function() {//Move slot <From> <To>
               var oldSlot = evt.data[1];
               var newSlot = evt.data[2];
-              if (oldSlot < tags.length && newSlot < tags.length) {
-                tags.splice(newSlot, 0, tags.splice(oldSlot, 1)[0]);
-                changeTag(currentTag);
+              if (oldSlot < tags.length && newSlot < NUM_TAGS) {
+                tempTag = getTagFromFlash(oldSlot);
+                saveTagToFlash(newSlot, tempTag);
+                changeTag(currentSlot);
               }
             })(); break;
 
@@ -606,9 +588,9 @@ function initialize() {
 
             case 0xFF: (function() {//Restart NFC <Slot?>
               if (evt.data.length > 1) {
-                changeTag(evt.data[1] >= tags.length ? 0 : evt.data[1]);
+                changeTag(evt.data[1] >= NUM_TAGS ? 0 : evt.data[1]);
               } else {
-                changeTag(currentTag);
+                changeTag(currentSlot);
               }
             })(); break;
           }
@@ -618,7 +600,7 @@ function initialize() {
 
     services[serviceId][nameCharacteristic] = {
       maxLen: 20,
-      value: getBufferClone(storage.readArrayBuffer("puck-name")),
+      value: new Uint8Array(storage.readArrayBuffer("puck-name")),
       readable : true,
       writable : true,
       indicate: false,
@@ -628,7 +610,7 @@ function initialize() {
         } else {
           storage.erase("puck-name");
         }
-        NRF.setAdvertising({}, { name: getBufferClone(storage.readArrayBuffer("puck-name")) });
+        NRF.setAdvertising({}, { name: new Uint8Array(storage.readArrayBuffer("puck-name")) });
       }
     };
 
