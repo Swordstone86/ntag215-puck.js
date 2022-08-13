@@ -25,7 +25,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-const NUM_TAGS = 14;
+const NUM_TAGS = 50;
 var storage = require("Storage");
 var currentSlot = 0;
 var enableUart = false;
