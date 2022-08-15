@@ -33,6 +33,7 @@ const NAME_CHARACTERISTIC = "78290004-d52e-473f-a9f4-f03da7c67dd1";
 let storage = require("Storage");
 let enableUart = false;
 let currentTag, cacheTag;
+let tagInfos = [];
 let changeTag;
 
 class NFCTag {
@@ -323,6 +324,14 @@ function getTagFromFlash(slot) {
 }
 
 function saveTagToFlash(slot, data) {
+  // Store tag metadata in memory for quick retrieval later
+  tagInfos[slot] = new Uint8Array(80)
+  tagInfos[slot].set(data.slice(0, 8), 0);
+  tagInfos[slot].set(data.slice(16, 24), 8);
+  tagInfos[slot].set(data.slice(32, 52), 20);
+  tagInfos[slot].set(data.slice(84, 92), 40);
+  tagInfos[slot].set(data.slice(96, 128), 48);
+
   let filename = getFilenameFromSlot(slot);
   storage.write(filename, data);
   console.log("Saved " + filename);
@@ -330,32 +339,22 @@ function saveTagToFlash(slot, data) {
 
 function initializeTags(numTags) {
   for (let i = 0; i < numTags; i++) {
-    let exists = storage.list(getFilenameFromSlot(i)).length;
-
-    if (!exists) { // If the tag doesn't already exist on the filesystem, create it.
-      let tempTag =  getTagFromFlash(i);
+    let tempTag = new Uint8Array(572);
+    let buffer = getTagFromFlash(i);
+    
+    if (buffer) { // If the tag doesn't already exist on the filesystem, create it
+      tempTag = buffer;
+    } 
+    else {
       tempTag[3] = 0x88;
       tempTag.set([0x48, 0x00, 0x00, 0xE1, 0x10, 0x3E, 0x00, 0x03, 0x00, 0xFE], 0x09);
       tempTag.set([0xBD, 0x04, 0x00, 0x00, 0xFF, 0x00, 0x05], 0x20B);
-      saveTagToFlash(i, tempTag);
     }
+    saveTagToFlash(i, tempTag);
   }
   // Initialize currentTag values
   currentTag = new NFCTag(getTagFromFlash(0));
   currentTag.slot = 0;
-}
-
-function getTagInfo(slot){
-  let output = new Uint8Array(80);
-  let tagInSlot = getTagFromFlash(slot);
-
-  output.set(tagInSlot.slice(0, 8), 0);
-  output.set(tagInSlot.slice(16, 24), 8);
-  output.set(tagInSlot.slice(32, 52), 20);
-  output.set(tagInSlot.slice(84, 92), 40);
-  output.set(tagInSlot.slice(96, 128), 48);
-
-  return output;
 }
 
 function getBufferClone(buffer){
@@ -530,7 +529,7 @@ function initialize() {
               if (evt.data.length > 1) {
                 //Returns a subset of data for identifying
                 let slot = evt.data[1] < NUM_TAGS ? evt.data[1] : currentTag.slot;
-                let data = getTagInfo(slot);
+                let data = tagInfos[slot]
                 response[SERVICE_ID][RETURN_CHARACTERISTIC].value = new Uint8Array(data.length + 2);
 
                 response[SERVICE_ID][RETURN_CHARACTERISTIC].value.set(new Uint8Array(evt.data, 0, 2), 0);
