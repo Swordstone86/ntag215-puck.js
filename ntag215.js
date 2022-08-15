@@ -1,5 +1,6 @@
-/* Copyright (c) 2020 Daniel Radtke. See the file LICENSE for copying permission. */
-/* Copyright (c) 2018 Andreas Dröscher. See the file LICENSE for copying permission. */
+/* Copyright (c) 2022 May Márquez. See the file LICENSE for copying permission. 
+/* Copyright (c) 2020 Daniel Radtke. See the file LICENSE for copying permission.
+/* Copyright (c) 2018 Andreas Dröscher. See the file LICENSE for copying permission.
 /* Copyright (c) 2013 Gordon Williams, Pur3 Ltd
 
 ------------------------------------------------------------------------------
@@ -39,6 +40,7 @@ const NAME_CHARACTERISTIC = "78290004-d52e-473f-a9f4-f03da7c67dd1";
 /** @noinline */
 const PUCK_NAME_FILENAME = "puck-name";
 const NUM_TAGS = 50;
+const NTAG215_SIZE = 572;
 let storage = require("Storage");
 let enableUart = false;
 let currentTag, cacheTag;
@@ -284,7 +286,7 @@ NFCTag.prototype = {
     NRF.nfcStop();
 
     //store data
-    this._data = data || new Uint8Array(572);
+    this._data = data || new Uint8Array(NTAG215_SIZE);
 
     //fix bcc0 and bcc1 if needed
     this._fixUid();
@@ -347,7 +349,7 @@ function saveTagToFlash(slot, data) {
 
 function initializeTags(numTags) {
   for (let i = 0; i < numTags; i++) {
-    let tempTag = new Uint8Array(572);
+    let tempTag = new Uint8Array(NTAG215_SIZE);
     let buffer = getTagFromFlash(i);
     
     if (buffer) { // If the tag doesn't already exist on the filesystem, create it
@@ -577,7 +579,7 @@ function initialize() {
               }
 
               //store data if it fits into memory
-              if ((startIdx + dataSize) <= 572) {
+              if ((startIdx + dataSize) <= NTAG215_SIZE) {
                 cacheTag.set(new Uint8Array(evt.data, 3, dataSize), startIdx);
               }
               
