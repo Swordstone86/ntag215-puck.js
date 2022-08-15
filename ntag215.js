@@ -25,11 +25,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-const NUM_TAGS = 50;
+/** 
+ * Use @noinline here so Closure doesn't try to repeatedly inline these strings
+ * Saves literally almost 1000 bytes
+ * @noinline */ 
 const SERVICE_ID = "78290001-d52e-473f-a9f4-f03da7c67dd1";
+/** @noinline */
 const COMMAND_CHARACTERISTIC = "78290002-d52e-473f-a9f4-f03da7c67dd1";
+/** @noinline */
 const RETURN_CHARACTERISTIC = "78290003-d52e-473f-a9f4-f03da7c67dd1";
+/** @noinline */
 const NAME_CHARACTERISTIC = "78290004-d52e-473f-a9f4-f03da7c67dd1";
+const NUM_TAGS = 50;
 let storage = require("Storage");
 let enableUart = false;
 let currentTag, cacheTag;
