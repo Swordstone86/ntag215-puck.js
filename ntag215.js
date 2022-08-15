@@ -26,60 +26,66 @@ THE SOFTWARE.
 */
 
 const NUM_TAGS = 7;
-var storage = require("Storage");
-var enableUart = false;
-var currentTag;
-var changeTag;
+const SERVICE_ID = "78290001-d52e-473f-a9f4-f03da7c67dd1";
+const COMMAND_CHARACTERISTIC = "78290002-d52e-473f-a9f4-f03da7c67dd1";
+const RETURN_CHARACTERISTIC = "78290003-d52e-473f-a9f4-f03da7c67dd1";
+const NAME_CHARACTERISTIC = "78290004-d52e-473f-a9f4-f03da7c67dd1";
+let storage = require("Storage");
+let enableUart = false;
+let currentTag, cacheTag;
+let changeTag;
 
-function NFCTag(data) {
-  this.setData(data);
-  this.authenticated = false;
-  this.backdoor = false;
-  this.tagWritten = false;
-  this.lockedPages = [];
-  this.slot = 0;
-  this.callbacks = this._callbacks;
+class NFCTag {
+  constructor(data) {
+    this.setData(data);
+    this.authenticated = false;
+    this.backdoor = false;
+    this.tagWritten = false;
+    this.lockedPages = [];
+    this.slot = 0;
+    this.callbacks = this._callbacks;
 
-  var self = this;
+    let self = this;
 
-  NRF.on('NFCon', function nfcOn() {
-    flashSlotOnLEDs(self.slot);
-  });
+    NRF.on('NFCon', function nfcOn() {
+      flashSlotOnLEDs(self.slot);
+    });
 
-  NRF.on('NFCoff', function nfcOff() {
-    writeLEDs();
+    NRF.on('NFCoff', function nfcOff() {
+      writeLEDs();
 
-    self.authenticated = false;
-    self.backdoor = false;
-    self.callbacks = self._callbacks;
+      self.authenticated = false;
+      self.backdoor = false;
+      self.callbacks = self._callbacks;
 
-    this.lockedPages = self._getLockedPages();
+      this.lockedPages = self._getLockedPages();
 
-    if (self.tagWritten == true) {
-      console.log("Saving tag to flash");
-      saveTagToFlash(self.slot, self._data);
-      self.tagWritten = false;
-    }
+      if (self.tagWritten == true) {
+        console.log("Saving tag to flash");
+        saveTagToFlash(self.slot, self._data);
+        self.tagWritten = false;
+      }
 
-    if (self._fixUid()) {
-      NRF.nfcStop();
-      NRF.nfcStart(new Uint8Array([self._data[0], self._data[1], self._data[2], self._data[4], self._data[5], self._data[6], self._data[7]]));
-    }
-  });
+      if (self._fixUid()) {
+        NRF.nfcStop();
+        NRF.nfcStart(new Uint8Array([self._data[0], self._data[1], self._data[2], self._data[4], self._data[5], self._data[6], self._data[7]]));
+      }
+    });
 
-  NRF.on('NFCrx', function nfcRx(rx) {
-    if (rx && self.callbacks[rx[0]]) {
-      self.callbacks[rx[0]](rx, self);
-    } else {
-      NRF.nfcSend(0);
-    }
-  });
+    NRF.on('NFCrx', function nfcRx(rx) {
+      if (rx && self.callbacks[rx[0]]) {
+        self.callbacks[rx[0]](rx, self);
+      } else {
+        NRF.nfcSend(0);
+      }
+    });
+  }
 }
 
 NFCTag.prototype = {
   _fixUid: function() {
-    var bcc0 = this._data[0] ^ this._data[1] ^ this._data[2] ^ 0x88;
-    var bcc1 = this._data[4] ^ this._data[5] ^ this._data[6] ^ this._data[7];
+    let bcc0 = this._data[0] ^ this._data[1] ^ this._data[2] ^ 0x88;
+    let bcc1 = this._data[4] ^ this._data[5] ^ this._data[6] ^ this._data[7];
 
     if (this._data[3] != bcc0 || this._data[8] != bcc1) {
       this._data[3] = bcc0;
@@ -93,10 +99,10 @@ NFCTag.prototype = {
     return false;
   },
   _getLockedPages: function() {
-    var locked = [0, 1];
+    let locked = [0, 1];
 
     // Static Lock Bytes
-    for (var bit = 0; bit < 8; bit++) {
+    for (let bit = 0; bit < 8; bit++) {
       if (this._data[11] & (1 << bit)) {
         locked.push(bit + 8);
       }
@@ -214,7 +220,7 @@ NFCTag.prototype = {
       }
 
       //calculate block index
-      var idx = rx[1] * 4;
+      let idx = rx[1] * 4;
 
       //store data if it fits into memory
       if (idx > self._data.length) {
@@ -275,7 +281,7 @@ NFCTag.prototype = {
     this._fixUid();
 
     //re-start
-    var header = NRF.nfcStart(new Uint8Array([data[0], data[1], data[2], data[4], data[5], data[6], data[7]]));
+    let header = NRF.nfcStart(new Uint8Array([data[0], data[1], data[2], data[4], data[5], data[6], data[7]]));
 
     //store UID/BCC
     this._data.set(header, 0);
@@ -323,19 +329,16 @@ function saveTagToFlash(slot, data) {
 }
 
 function initializeTags(numTags) {
-  for (var i = 0; i < numTags; i++) {
-    let tempTag = new Uint8Array(572);
-    let buffer = getTagFromFlash(i);
+  for (let i = 0; i < numTags; i++) {
+    let exists = storage.list(getFilenameFromSlot(i)).length;
 
-    if (buffer) { // Check if tag already exists
-      tempTag = buffer;
-    } else { // Otherwise, create new one
+    if (!exists) { // If the tag doesn't already exist on the filesystem, create it.
+      let tempTag =  getTagFromFlash(i);
       tempTag[3] = 0x88;
       tempTag.set([0x48, 0x00, 0x00, 0xE1, 0x10, 0x3E, 0x00, 0x03, 0x00, 0xFE], 0x09);
       tempTag.set([0xBD, 0x04, 0x00, 0x00, 0xFF, 0x00, 0x05], 0x20B);
+      saveTagToFlash(i, tempTag);
     }
-
-    saveTagToFlash(i, tempTag);
   }
   // Initialize currentTag values
   currentTag = new NFCTag(getTagFromFlash(0));
@@ -343,8 +346,8 @@ function initializeTags(numTags) {
 }
 
 function getTagInfo(slot){
-  var output = Uint8Array(80);
-  var tagInSlot = getTagFromFlash(slot);
+  let output = new Uint8Array(80);
+  let tagInSlot = getTagFromFlash(slot);
 
   output.set(tagInSlot.slice(0, 8), 0);
   output.set(tagInSlot.slice(16, 24), 8);
@@ -357,8 +360,8 @@ function getTagInfo(slot){
 
 function getBufferClone(buffer){
   if (buffer) {
-    var output = new Uint8Array(buffer.length);
-    for (var buffPos = 0; buffPos < buffer.length; buffPos++) {
+    let output = new Uint8Array(buffer.length);
+    for (let buffPos = 0; buffPos < buffer.length; buffPos++) {
       output[buffPos] = buffer[buffPos];
     }
 
@@ -412,7 +415,10 @@ function setInitWatch() {
 }
 
 // Default values are 0 to allow for quick LED blanking
-function writeLEDs(led1 = 0, led2 = 0, led3 = 0) {
+function writeLEDs(led1, led2, led3) {
+  led1 = led1 ? led1 : 0;
+  led2 = led2 ? led2 : 0;
+  led3 = led3 ? led3 : 0;
   LED1.write(led1);
   LED2.write(led2);
   LED3.write(led3);
@@ -432,7 +438,7 @@ function initialize() {
 
   initializeTags(NUM_TAGS);
 
-  var changeTagTimeout = null;
+  let changeTagTimeout = null;
 
   changeTag = function changeTag(slot) {
     // If a previous tag change is happening, cancel it and continue with this one
@@ -470,7 +476,7 @@ function initialize() {
   }, BTN, { repeat: true, edge: "falling", debounce: 50 });
 
   /**
-  var tagLayout = [
+  let tagLayout = [
     [0, 9],    // UID
     [9, 1],    // Internal
     [10, 2],   // Lock Bytes
@@ -489,15 +495,11 @@ function initialize() {
 
   NRF.setAdvertising({}, { name: getBufferClone(storage.readArrayBuffer("puck-name")) });
   if (!enableUart) {
-    const serviceId = "78290001-d52e-473f-a9f4-f03da7c67dd1";
-    const commandCharacteristic = "78290002-d52e-473f-a9f4-f03da7c67dd1";
-    const returnCharacteristic = "78290003-d52e-473f-a9f4-f03da7c67dd1";
-    const nameCharacteristic = "78290004-d52e-473f-a9f4-f03da7c67dd1";
 
-    var services = { };
-    services[serviceId] = {};
+    let services = { };
+    services[SERVICE_ID] = {};
 
-    services[serviceId][returnCharacteristic] = {
+    services[SERVICE_ID][RETURN_CHARACTERISTIC] = {
       maxLen: 260,
       value: [],
       readable: true,
@@ -505,7 +507,7 @@ function initialize() {
       indicate: false
     };
 
-    services[serviceId][commandCharacteristic] = {
+    services[SERVICE_ID][COMMAND_CHARACTERISTIC] = {
       maxLen: 20,
       value: [],
       readable : true,
@@ -513,13 +515,13 @@ function initialize() {
       indicate: false,
       onWrite : function(evt) {
         if (evt.data.length > 0) {
-          var response = {};
-          response[serviceId] = {};
-          response[serviceId][commandCharacteristic] = {
+          let response = {};
+          response[SERVICE_ID] = {};
+          response[SERVICE_ID][COMMAND_CHARACTERISTIC] = {
             value: evt.data,
             indicate: false
           };
-          response[serviceId][returnCharacteristic] = {
+          response[SERVICE_ID][RETURN_CHARACTERISTIC] = {
             value: [],
             indicate: false
           };
@@ -527,16 +529,16 @@ function initialize() {
             case 0x01: (function() {//Slot Information <Slot>
               if (evt.data.length > 1) {
                 //Returns a subset of data for identifying
-                var slot = evt.data[1] < NUM_TAGS ? evt.data[1] : currentTag.slot;
-                var data = getTagInfo(slot);
-                response[serviceId][returnCharacteristic].value = Uint8Array(data.length + 2);
+                let slot = evt.data[1] < NUM_TAGS ? evt.data[1] : currentTag.slot;
+                let data = getTagInfo(slot);
+                response[SERVICE_ID][RETURN_CHARACTERISTIC].value = new Uint8Array(data.length + 2);
 
-                response[serviceId][returnCharacteristic].value.set(Uint8Array(evt.data, 0, 2), 0);
-                response[serviceId][returnCharacteristic].value[1] = slot;
-                response[serviceId][returnCharacteristic].value.set(data, 2);
+                response[SERVICE_ID][RETURN_CHARACTERISTIC].value.set(new Uint8Array(evt.data, 0, 2), 0);
+                response[SERVICE_ID][RETURN_CHARACTERISTIC].value[1] = slot;
+                response[SERVICE_ID][RETURN_CHARACTERISTIC].value.set(data, 2);
               } else {
                 //Returns 0x01 <Current Slot> <Slot Count>
-                response[serviceId][returnCharacteristic].value = [0x01, currentTag.slot, NUM_TAGS];
+                response[SERVICE_ID][RETURN_CHARACTERISTIC].value = [0x01, currentTag.slot, NUM_TAGS];
               }
               NRF.updateServices(response);
             })(); break;
@@ -544,39 +546,45 @@ function initialize() {
             case 0x02: (function() {//Read <Slot> <StartPage> <PageCount>
               //Max pages: 63
               //Returns 0x02 <Slot> <StartPage> <PageCount> <Data>
-              var startIdx = evt.data[2] * 4;
-              var dataSize = evt.data[3] * 4;
-              var slot = evt.data[1] < NUM_TAGS ? evt.data[1] : currentTag.slot;
+              let startIdx = evt.data[2] * 4;
+              let dataSize = evt.data[3] * 4;
+              let slot = evt.data[1] < NUM_TAGS ? evt.data[1] : currentTag.slot;
               let tempTag = getTagFromFlash(slot);
-              var sourceData = tempTag.slice(startIdx, startIdx + dataSize);
+              let sourceData = tempTag.slice(startIdx, startIdx + dataSize);
               //console.log("Reading from slot: " + slot);
               //console.log("Read from " + startIdx + " - " + (startIdx + dataSize));
-              response[serviceId][returnCharacteristic].value = Uint8Array(dataSize + 4);
-              response[serviceId][returnCharacteristic].value.set(Uint8Array(evt.data, 0, 4), 0);
-              response[serviceId][returnCharacteristic].value[1] = slot;
-              response[serviceId][returnCharacteristic].value.set(sourceData, 4);
+              response[SERVICE_ID][RETURN_CHARACTERISTIC].value = new Uint8Array(dataSize + 4);
+              response[SERVICE_ID][RETURN_CHARACTERISTIC].value.set(new Uint8Array(evt.data, 0, 4), 0);
+              response[SERVICE_ID][RETURN_CHARACTERISTIC].value[1] = slot;
+              response[SERVICE_ID][RETURN_CHARACTERISTIC].value.set(sourceData, 4);
               NRF.updateServices(response);
             })(); break;
 
             case 0x03: (function() {//Write <Slot> <StartPage> <Data>
-              var startIdx = evt.data[2] * 4;
-              var dataSize = evt.data.length - 3;
-              var slot = evt.data[1] < NUM_TAGS ? evt.data[1] : currentTag.slot;
-              var tempTag = getTagFromFlash(slot);
+              let startIdx = evt.data[2] * 4;
+              let dataSize = evt.data.length - 3;
+              let slot = evt.data[1] < NUM_TAGS ? evt.data[1] : currentTag.slot;
+              // If this is the first page, start loading the tag into cache
+              if (evt.data[2] == 0) {
+                cacheTag = getTagFromFlash(slot);
+              }
 
               //store data if it fits into memory
               if ((startIdx + dataSize) <= 572) {
-                tempTag.set(new Uint8Array(evt.data, 3, dataSize), startIdx);
+                cacheTag.set(new Uint8Array(evt.data, 3, dataSize), startIdx);
               }
-
-              saveTagToFlash(slot, tempTag);
+              
+              // If this is page 140, this is the last page, so we can save the tag now
+              if (evt.data[2] == 140) {
+                saveTagToFlash(slot, cacheTag);
+              }
             })(); break;
 
             case 0xFD: (function() {//Move slot <From> <To>
-              var oldSlot = evt.data[1];
-              var newSlot = evt.data[2];
-              if (oldSlot < tags.length && newSlot < NUM_TAGS) {
-                tempTag = getTagFromFlash(oldSlot);
+              let oldSlot = evt.data[1];
+              let newSlot = evt.data[2];
+              if (oldSlot < NUM_TAGS && newSlot < NUM_TAGS) {
+                let tempTag = getTagFromFlash(oldSlot);
                 saveTagToFlash(newSlot, tempTag);
                 changeTag(currentTag.slot);
               }
@@ -598,7 +606,7 @@ function initialize() {
       }
     };
 
-    services[serviceId][nameCharacteristic] = {
+    services[SERVICE_ID][NAME_CHARACTERISTIC] = {
       maxLen: 20,
       value: getBufferClone(storage.readArrayBuffer("puck-name")),
       readable : true,
@@ -614,7 +622,7 @@ function initialize() {
       }
     };
 
-    NRF.setServices(services, { uart : false, advertise: [serviceId] });
+    NRF.setServices(services, { uart : false, advertise: [SERVICE_ID] });
   }
 }
 
