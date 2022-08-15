@@ -2,7 +2,7 @@ include ./mixins/_githubCorner.pug
 
 html
   head
-    title Puck NTAG215 Management
+    title omniibo Tag Manager
     meta(name="viewport", content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes")
     meta(name="msapplication-config", content="./browserconfig.xml")
     link(rel="manifest", href="./site.webmanifest")
@@ -10,8 +10,8 @@ html
   body
     +githubCorner("https://github.com/Swordstone86/omniibo", "#fff", "#151513")
     .container#mainContainer
-      a.btn.btn-default.btn-lg.btn-block.well#puckConnect Connect to Puck
-      a.btn.btn-default.btn-lg.btn-block.well#puckDisconnect Disconnect from Puck
+      a.btn.btn-default.btn-lg.btn-block.well#puckConnect Connect to <b>omniibo</b>
+      a.btn.btn-default.btn-lg.btn-block.well#puckDisconnect Disconnect from <b>omniibo</b>
       a.btn.btn-default.btn-lg.btn-block.well#puckName Change Name
       a.btn.btn-default.btn-lg.btn-block.well#puckUart Enable UART
 

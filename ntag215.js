@@ -27,7 +27,7 @@ THE SOFTWARE.
 
 /** 
  * Use @noinline here so Closure doesn't try to repeatedly inline these strings
- * Saves literally almost 1000 bytes
+ * Saves literally over 1000 bytes
  * @noinline */ 
 const SERVICE_ID = "78290001-d52e-473f-a9f4-f03da7c67dd1";
 /** @noinline */
@@ -36,6 +36,8 @@ const COMMAND_CHARACTERISTIC = "78290002-d52e-473f-a9f4-f03da7c67dd1";
 const RETURN_CHARACTERISTIC = "78290003-d52e-473f-a9f4-f03da7c67dd1";
 /** @noinline */
 const NAME_CHARACTERISTIC = "78290004-d52e-473f-a9f4-f03da7c67dd1";
+/** @noinline */
+const PUCK_NAME_FILENAME = "puck-name";
 const NUM_TAGS = 50;
 let storage = require("Storage");
 let enableUart = false;
@@ -69,7 +71,6 @@ class NFCTag {
       this.lockedPages = self._getLockedPages();
 
       if (self.tagWritten == true) {
-        console.log("Saving tag to flash");
         saveTagToFlash(self.slot, self._data);
         self.tagWritten = false;
       }
@@ -499,7 +500,7 @@ function initialize() {
   ];
   */
 
-  NRF.setAdvertising({}, { name: getBufferClone(storage.readArrayBuffer("puck-name")) });
+  NRF.setAdvertising({}, { name: getBufferClone(storage.readArrayBuffer(PUCK_NAME_FILENAME)) });
   if (!enableUart) {
 
     let services = { };
@@ -614,17 +615,17 @@ function initialize() {
 
     services[SERVICE_ID][NAME_CHARACTERISTIC] = {
       maxLen: 20,
-      value: getBufferClone(storage.readArrayBuffer("puck-name")),
+      value: getBufferClone(storage.readArrayBuffer(PUCK_NAME_FILENAME)),
       readable : true,
       writable : true,
       indicate: false,
       onWrite : function(evt) {
         if (evt.data.length > 0) {
-          storage.write("puck-name", evt.data);
+          storage.write(PUCK_NAME_FILENAME, evt.data);
         } else {
-          storage.erase("puck-name");
+          storage.erase(PUCK_NAME_FILENAME);
         }
-        NRF.setAdvertising({}, { name: getBufferClone(storage.readArrayBuffer("puck-name")) });
+        NRF.setAdvertising({}, { name: getBufferClone(storage.readArrayBuffer(PUCK_NAME_FILENAME)) });
       }
     };
 

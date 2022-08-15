@@ -1,1 +1,1 @@
-../ntag215.js
+../ntag215.min.js

@@ -135,7 +135,7 @@ $(() => {
   async function connectPuck(e: Event | JQuery.Event) {
     e.preventDefault()
     try {
-      await showModal("Please Wait", "Connecting to puck", true)
+      await showModal("Please Wait", "Connecting to omniibo", true)
       await puck.connect(async (ev) => {
         await disconnectPuck(ev)
       })
@@ -155,7 +155,7 @@ $(() => {
   async function disconnectPuck(e: Event | JQuery.Event) {
     e.preventDefault()
     try {
-      await showModal("Please Wait", "Disconnecting from puck", true)
+      await showModal("Please Wait", "Disconnecting from omniibo", true)
 
       if (puck.isConnected) {
         await puck.disconnect()
@@ -184,12 +184,12 @@ $(() => {
   async function changeName(e: Event | JQuery.Event) {
     e.preventDefault()
     try {
-      await showModal("Please Wait", "Reading puck name", true)
+      await showModal("Please Wait", "Reading omniibo name", true)
       const currentName = await puck.getName()
       const newName = prompt("Enter a name", currentName)
 
       if (newName != null) {
-        await showModal("Please Wait", "Setting puck name", true)
+        await showModal("Please Wait", "Setting omniibo name", true)
         await puck.setName(newName)
       }
 
