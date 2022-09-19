@@ -2,6 +2,7 @@ export const serviceId = "78290001-d52e-473f-a9f4-f03da7c67dd1"
 export const commandCharacteristicId = "78290002-d52e-473f-a9f4-f03da7c67dd1"
 export const returnCharacteristicId = "78290003-d52e-473f-a9f4-f03da7c67dd1"
 export const nameCharacteristicId = "78290004-d52e-473f-a9f4-f03da7c67dd1"
+export const firmwareCharacteristicId = "78290005-d52e-473f-a9f4-f03da7c67dd1"
 
 export class Puck {
   private device: BluetoothDevice
@@ -10,7 +11,9 @@ export class Puck {
   private commandCharacteristic: BluetoothRemoteGATTCharacteristic
   private returnCharacteristic: BluetoothRemoteGATTCharacteristic
   private nameCharacteristic: BluetoothRemoteGATTCharacteristic
+  private firmwareCharacteristic: BluetoothRemoteGATTCharacteristic
   private totalSlots: number
+  private _firmwareName: string
 
   private static dummyFunc: (...data: any[]) => void = () => undefined
 
@@ -26,6 +29,10 @@ export class Puck {
 
   get isConnected(): boolean {
     return this.server && this.server.connected
+  }
+
+  get firmwareName(): string {
+    return this._firmwareName
   }
 
   async connect(disconnectCallback?: (this: BluetoothDevice, ev: Event) => any) {
@@ -58,6 +65,14 @@ export class Puck {
     this.log('Getting Name Characteristic...')
     this.nameCharacteristic = await this.service.getCharacteristic(nameCharacteristicId)
 
+    try {
+      this.log('Getting Firmware Characteristic...')
+      this.firmwareCharacteristic = await this.service.getCharacteristic(firmwareCharacteristicId)
+      this._firmwareName = new TextDecoder().decode(await this.firmwareCharacteristic.readValue())
+    } catch (noFirmwareError) {
+
+    }
+
     this.log('Getting slot information')
     const info = await this.getSlotInformation()
     this.totalSlots = info.totalSlots
@@ -69,12 +84,14 @@ export class Puck {
       await this.server.disconnect()
     }
 
-    this.device = null
-    this.server = null
-    this.service = null
-    this.commandCharacteristic = null
-    this.returnCharacteristic = null
-    this.nameCharacteristic = null
+    this.device =
+    this.server =
+    this.service =
+    this.commandCharacteristic =
+    this.returnCharacteristic =
+    this.nameCharacteristic =
+    this.firmwareCharacteristic =
+    this._firmwareName = undefined
   }
 
   async getName() {

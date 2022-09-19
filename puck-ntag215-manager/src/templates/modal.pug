@@ -2,9 +2,12 @@
   .modal-dialog
     .modal-content
       .modal-header
-        button.close.close-modal(data-dismiss="modal") &times;
+        button.close.close-modal(data-close-value=255) &times;
         h4.modal-title
       .modal-body
         p
-      .modal-footer
-        button.btn.btn-default.close-modal(data-dismiss="modal") Close
+
+      if (buttons && buttons.length > 0)
+        .modal-footer
+          each button in buttons
+            button.btn.btn-default.close-modal(data-close-value=button.value)=button.label
