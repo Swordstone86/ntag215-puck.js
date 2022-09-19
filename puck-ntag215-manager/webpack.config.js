@@ -34,6 +34,9 @@ module.exports = (env, argv) => {
     mode: argv.mode || "development",
     entry: { ...jsEntries },
     devtool: "source-map",
+    stats: {
+      children: true,
+    },
     module: {
       rules: [
         {
