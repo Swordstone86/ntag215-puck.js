@@ -7,6 +7,7 @@ let modalBody: JQuery<HTMLElement>
 let modalClose: JQuery<HTMLElement>
 
 let modalShowing = false
+let modalCanClose = true;
 
 import { sleep } from "./sleep"
 
@@ -22,10 +23,27 @@ $(() => {
   modalBody = alertModal.find(".modal-body > p")
   modalClose = alertModal.find(".close-modal")
 
+  alertModal.on("click", modalBackgroundClick)
   $("body").append(alertModal)
 })
 
-export async function showModal(title: string, message: string, preventClose: boolean = false) {
+function modalBackgroundClick(e: any) {
+  if (!modalCanClose) {
+    return
+  }
+
+  if (e.target.class == "modal-dialog") {
+    return
+  }
+
+  if ($(e.target).closest('.modal-dialog').length) {
+    return
+  }
+
+  hideModal()
+}
+
+export async function showModal(title: string, message: string, preventClose = false, htmlEscapeTitle = true, htmlEscapeBody = true) {
   if (modalShowing) {
     await hideModal()
   }
@@ -33,12 +51,20 @@ export async function showModal(title: string, message: string, preventClose: bo
   modalShowing = true
   if (title != null) {
     modalHeader.show()
-    modalTitle.text(title)
+    if (htmlEscapeTitle) {
+      modalTitle.text(title)
+    } else {
+      modalTitle.html(title)
+    }
   } else {
     modalHeader.hide()
   }
 
-  modalBody.text(message)
+  if (htmlEscapeBody) {
+    modalBody.text(message)
+  } else {
+    modalBody.html(message)
+  }
 
   if (preventClose) {
     modalFooter.hide()
@@ -50,11 +76,30 @@ export async function showModal(title: string, message: string, preventClose: bo
 
   alertModal.modal({ backdrop: 'static', keyboard: false, show: true })
 
-  if (!preventClose) {
-    $("body > .modal-backdrop").on("click", hideModal)
-  }
+  modalCanClose = preventClose !== true
 
   await sleep(200)
+}
+
+export function setTitle(title: string, htmlEscape = true) {
+  if (title != null) {
+    modalHeader.show()
+    if (htmlEscape) {
+      modalTitle.text(title)
+    } else {
+      modalTitle.html(title)
+    }
+  } else {
+    modalHeader.hide()
+  }
+}
+
+export function setBody(title: string, htmlEscape = true) {
+  if (htmlEscape) {
+    modalBody.text(title)
+  } else {
+    modalBody.html(title)
+  }
 }
 
 export async function hideModal() {

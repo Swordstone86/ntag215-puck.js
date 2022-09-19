@@ -1,11 +1,15 @@
 require("./style/main.scss")
 
+import { getBlankNtag } from "./ntag215"
 import { Puck } from "./puck"
 import { showModal, hideModal, setModal } from "./modal"
 import { saveData, readFile } from "./fileHelpers"
+import { supportsBluetooth, bluetoothOrError } from "./browserCheck"
+import { SecureDfuUpdateMessage, SecureDfuUpdateProgress } from "./SecureDfuUpdate"
+import * as EspruinoHelper from "./espruino"
 
 const anyWindow = (window as any)
-const blankTag = new Uint8Array(require('arraybuffer-loader!../empty_slot.bin'))
+const blankTag = new Uint8Array(require('arraybuffer-loader!../NTAG215_blank.bin'))
 const puck = anyWindow.puck = new Puck(console.log, console.warn, console.error)
 
 $(() => {
@@ -14,16 +18,21 @@ $(() => {
   const scriptTextArea = $("#readme textarea")
   const slotTemplate = require("./templates/slot.pug")
 
+  if (supportsBluetooth !== true) {
+    showModal("Unsupported Browser", supportsBluetooth, true, true, false)
+  }
+
   if (__DEVELOPMENT__) {
     anyWindow.debug = {
       ...(anyWindow.debug || {}),
       ...{
-        puck,
-        showModal,
+        EspruinoHelper,
         hideModal,
-        setModal,
+        puck,
+        readFile,
         saveData,
-        readFile
+        setModal,
+        showModal
       }
     }
   }
@@ -81,40 +90,18 @@ $(() => {
     element.find("a.slot-upload-link").on("click", async (e) => {
       e.preventDefault()
 
-      readFile(async (file, error) => {
-        try {
-          if (error != null) {
-            await showModal("Error", error.message)
-
-            return
-          }
-
-          await writeSlot(slot, file.data, element)
-        } catch (error) {
-          await showModal("Error", error)
-        }
-      }, 572)
-    })
-
-    /*element.find("a.slot-load-link").on("click", async (e) => {
-      e.preventDefault()
-
       try {
-        await showModal("Please Wait", `Loading first tag stored in flash`, true)
-        var bins = await puck.getBinsOnFlash()
-        await puck.loadFromFlash(slot, bins[0]) // REPLACE THIS LATER
-        await hideModal()
-        await updateSlotElement(slot, element)
+        const file = await readFile(572)
+        await writeSlot(slot, file.data, element)
       } catch (error) {
-        await showModal("Error", error)
+        await showModal("Error", error.message)
       }
-    })*/
+    })
 
     element.find("a.slot-clear-link").on("click", async (e) => {
       e.preventDefault()
 
-      await writeSlot(slot, blankTag, element)
-      await updateSlotElement(slot, element)
+      await writeSlot(slot, getBlankNtag(), element)
     })
 
     element.find("a.slot-select-link").on("click", async (e) => {
@@ -134,7 +121,9 @@ $(() => {
 
   async function connectPuck(e: Event | JQuery.Event) {
     e.preventDefault()
+
     try {
+      await bluetoothOrError()
       await showModal("Please Wait", "Connecting to omniibo", true)
       await puck.connect(async (ev) => {
         await disconnectPuck(ev)
@@ -199,10 +188,81 @@ $(() => {
     }
   }
 
-  $("a#puckConnect").on("click", connectPuck)
-  $("a#puckDisconnect").on("click", disconnectPuck)
-  $("a#puckUart").on("click", enableUart)
-  $("a#puckName").on("click", changeName)
+  async function uploadScript(e: Event | JQuery.Event) {
+    try {
+      await bluetoothOrError()
+      await showModal("Please Wait", "Connecting to puck", true)
+      await EspruinoHelper.open()
+
+      const ver = await EspruinoHelper.getNtagVersion()
+
+      if (!(ver.major == 1 && ver.minor >= 0)) {
+        throw new Error("You must flash the custom firmware prior to uploading the script.")
+      }
+
+      await showModal("Uploading", "Uploading script file, please wait.")
+      await EspruinoHelper.writeCode()
+      EspruinoHelper.close()
+      await hideModal()
+    } catch (error) {
+      EspruinoHelper.close()
+      await showModal("Error", error)
+    }
+  }
+
+  (async () => {
+    // load the firmware updater
+    const { SecureDfuUpdate, waitForFirmware } = await import("./SecureDfuUpdate")
+    await waitForFirmware()
+
+    async function updateFirmware(e: Event | JQuery.Event) {
+      let modalShown = false
+      let canClose = true;
+      try {
+        await bluetoothOrError()
+
+        let previousMessage: string
+
+        async function status(event: SecureDfuUpdateMessage) {
+          previousMessage = event.message
+          canClose = event.final
+
+          if (modalShown === false || event.final) {
+            modalShown = true
+            await showModal("Updating Firmware", previousMessage, event.final !== true)
+          } else {
+            setModal("Updating Firmware", previousMessage)
+          }
+        }
+
+        async function log(event: SecureDfuUpdateMessage) {
+          console.log(event)
+        }
+
+        async function progress(event: SecureDfuUpdateProgress) {
+          setModal("Updating Firmware", `${previousMessage}\n\n${event.currentBytes} / ${event.totalBytes} bytes`)
+        }
+
+        const dfu = new SecureDfuUpdate(status, log, progress)
+
+        await dfu.update()
+      } catch (error) {
+        if (modalShown === false || canClose !== true) {
+          await showModal("Error", error)
+        } else {
+          setModal("Error", error)
+        }
+      }
+    }
+
+    $("#updateFirmware").on("click", updateFirmware).prop("disabled", false)
+  })();
+
+  $("#puckConnect").on("click", connectPuck).prop("disabled", false)
+  $("#puckDisconnect").on("click", disconnectPuck).prop("disabled", false)
+  $("#puckUart").on("click", enableUart).prop("disabled", false)
+  $("#puckName").on("click", changeName).prop("disabled", false)
+  $("#uploadScript").on("click", uploadScript).prop("disabled", false)
   $("#readme textarea, #readme a[href$='ntag215.js']").on("click", (e) => {
     e.preventDefault()
     scriptTextArea.trigger("focus").trigger("select")

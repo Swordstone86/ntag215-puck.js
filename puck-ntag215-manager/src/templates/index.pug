@@ -6,18 +6,28 @@ html
     meta(name="viewport", content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes")
     meta(name="msapplication-config", content="./browserconfig.xml")
     link(rel="manifest", href="./site.webmanifest")
+    link(rel="icon", href="./favicon.ico", type="image/x-icon")
+    link(rel="apple-touch-icon", href="./apple-touch-icon.png")
     include ./analytics.pug
   body
     +githubCorner("https://github.com/Swordstone86/omniibo", "#fff", "#151513")
     .container#mainContainer
-      a.btn.btn-default.btn-lg.btn-block.well#puckConnect Connect to <b>omniibo</b>
-      a.btn.btn-default.btn-lg.btn-block.well#puckDisconnect Disconnect from <b>omniibo</b>
-      a.btn.btn-default.btn-lg.btn-block.well#puckName Change Name
-      a.btn.btn-default.btn-lg.btn-block.well#puckUart Enable UART
+      button.btn.btn-default.btn-lg.btn-block.well#puckConnect(disabled="disabled") Connect to <b>omniibo</b>
+      button.btn.btn-default.btn-lg.btn-block.well#updateFirmware(disabled="disabled") Update Firmware (DFU Mode)
+      button.btn.btn-default.btn-lg.btn-block.well#uploadScript(disabled="disabled") Upload Script (UART Mode)
+      button.btn.btn-default.btn-lg.btn-block.well#puckDisconnect(disabled="disabled") Disconnect from <b>omniibo</b>
+      button.btn.btn-default.btn-lg.btn-block.well#puckName(disabled="disabled") Change Name
+      button.btn.btn-default.btn-lg.btn-block.well#puckUart(disabled="disabled") Enable UART
 
       #readme
         include:markdown-it ../../readme.md
-        textarea(readonly="readonly")
+        textarea#code(readonly="readonly")
           include:escape-html ../../ntag215.js
 
       #slotsContainer
+
+      //include ./adsense.pug
+    include ./kofi.pug
+
+    .editor--terminal
+      .editor__canvas

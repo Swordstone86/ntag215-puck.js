@@ -11,6 +11,8 @@
 
   &.connected {
     #puckConnect,
+    #updateFirmware,
+    #uploadScript,
     #readme {
       display: none;
     }
