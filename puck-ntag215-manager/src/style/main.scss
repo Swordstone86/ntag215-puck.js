@@ -1,13 +1,36 @@
 $icon-font-path: "~bootstrap-sass/assets/fonts/bootstrap/" !default;
 @import "_variables.scss";
 @import "~bootstrap-sass/assets/stylesheets/_bootstrap.scss";
+@import "mixins/breakpoints";
 @import "_bootswatch.scss";
 @import "_githubCorner.scss";
 @import "_mainContainer.scss";
 @import "_slotsContainer.scss";
+@import "_kofi.scss";
 
 #readme textarea {
   width: 100%;
   height: 400px;
   font-family: monospace;
+}
+
+#terminalfocus, .editor--terminal {
+  display: none;
+}
+
+@include media-breakpoint-up(md) {
+  #updateFirmware, #uploadScript {
+    width: calc(50% - 10px);
+    display: inline-block;
+    margin-bottom: 0;
+    margin-top: 0px;
+  }
+
+  #updateFirmware {
+    margin-right: 10px;
+  }
+
+  #uploadScript {
+    margin-left: 10px;
+  }
 }

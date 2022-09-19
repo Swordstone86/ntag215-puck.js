@@ -1,0 +1,9 @@
+@media only screen and (max-width: 1400px) {
+  body {
+      padding-bottom: 63px;
+  }
+}
+
+div[id^='kofi-widget'] > .floatingchat-container-wrap {
+  z-index:100 !important;
+}

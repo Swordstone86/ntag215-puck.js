@@ -1,48 +1,94 @@
-@keyframes octocat-wave {
-  0% {
-    transform: rotate(0deg);
-  }
+@media screen {
+  @media (min-width: 1170px) {
+    @keyframes octocat-wave {
+      0% {
+        transform: rotate(0deg);
+      }
 
-  20% {
-    transform: rotate(-25deg);
-  }
+      20% {
+        transform: rotate(-25deg);
+      }
 
-  40% {
-    transform: rotate(10deg);
-  }
+      40% {
+        transform: rotate(10deg);
+      }
 
-  60% {
-    transform: rotate(-25deg);
-  }
+      60% {
+        transform: rotate(-25deg);
+      }
 
-  80% {
-    transform: rotate(10deg);
-  }
+      80% {
+        transform: rotate(10deg);
+      }
 
-  100% {
-    transform: rotate(0deg);
-  }
-}
+      100% {
+        transform: rotate(0deg);
+      }
+    }
 
-.github-corner {
-  transition: opacity 0.3s;
-  opacity: 0.7;
+    .github-corner {
+      transition: opacity 0.3s;
+      opacity: 0.7;
 
-  &:hover {
-    opacity: 1;
+      &:hover {
+        opacity: 1;
 
-    .octo-arm {
-      animation: octocat-wave 560ms ease-in-out;
+        .octo-arm {
+          animation: octocat-wave 560ms ease-in-out;
+        }
+      }
+
+      @media (max-width: 500px) {
+        &:hover .octo-arm {
+          animation: octocat-wave 560ms ease-in-out;
+        }
+
+        .octo-arm {
+          animation: none;
+        }
+      }
     }
   }
 
-  @media (max-width: 500px) {
-    &:hover .octo-arm {
-      animation: octocat-wave 560ms ease-in-out;
+  @media (max-width: 1170px) {
+    .github-corner {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      background-color: rgba(255,255,255,.9);
+      height: 48px;
+      z-index: 999;
+      display: inline-block;
+      text-align: center;
+
+      opacity: 0.7;
+
+      & svg {
+        display: none;
+      }
+
+      &:hover {
+        opacity: 1;
+      }
+
+      &:before {
+        content: 'View on GitHub';
+        color:  #111111;
+      }
+
+      &:after {
+        display: inline-block;
+        height: 100%;
+        width: 0;
+        content: '';
+        vertical-align: middle;
+      }
     }
 
-    .octo-arm {
-      animation: none;
+    body {
+        padding-top: 48px;
     }
   }
 }

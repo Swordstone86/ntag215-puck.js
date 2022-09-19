@@ -14,9 +14,9 @@ export class Puck {
 
   private static dummyFunc: (...data: any[]) => void = () => undefined
 
-  public log: (...data: any[]) => void
-  public error: (...data: any[]) => void
-  public warn: (...data: any[]) => void
+  log: (...data: any[]) => void
+  error: (...data: any[]) => void
+  warn: (...data: any[]) => void
 
   constructor(log?: (...data: any[]) => void, warn?: (...data: any[]) => void, error?: (...data: any[]) => void) {
     this.log = log ?? Puck.dummyFunc
@@ -137,7 +137,7 @@ export class Puck {
         const response = await this.returnCharacteristic.readValue()
         const responseArray = new Uint8Array((response).buffer)
 
-        if (responseArray.length == 82 && command[0] === responseArray[0] && command[1] === responseArray[1]) {
+        if (responseArray.length === 82 && command[0] === responseArray[0] && command[1] === responseArray[1]) {
           return responseArray.slice(2)
         }
       }
@@ -207,9 +207,32 @@ export class Puck {
       }
 
       await this.restartNfc(info.currentSlot)
+      await this.saveSlot(slot)
     } else {
       throw new Error(`Invalid slot: ${slot}`)
     }
+  }
+
+  async saveSlot(slot: number = null) {
+    if (!this.isConnected) {
+      throw new Error("Puck is not connected")
+    }
+
+    const command = [Puck.Command.SaveSlot]
+
+    if (slot != null) {
+      this.log(`Saving slot ${slot}`)
+
+      if (slot >= 0 && slot < this.totalSlots) {
+        command.push(slot)
+      } else {
+        throw new Error(`Invalid slot: ${slot}`)
+      }
+    } else {
+      this.log("Saving current slot")
+    }
+
+    await this.commandCharacteristic.writeValueWithResponse(Uint8Array.from(command))
   }
 
   async getSlotInformation(): Promise<Puck.SlotInfo> {
@@ -330,7 +353,7 @@ export class Puck {
     await this.commandCharacteristic.writeValueWithResponse(Uint8Array.from(command))
   }
 
-  public changeSlot = this.restartNfc
+  changeSlot = this.restartNfc
 }
 
 // tslint:disable-next-line: no-namespace
@@ -345,8 +368,7 @@ export namespace Puck {
     SlotInformation = 0x01,
     Read = 0x02,
     Write = 0x03,
-    GetBins = 0x04,
-    Load = 0x05,
+    SaveSlot = 0x04,
     MoveSlot = 0xFD,
     EnableUart = 0xFE,
     RestartNFC = 0xFF
