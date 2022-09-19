@@ -9,7 +9,6 @@ import { SecureDfuUpdateMessage, SecureDfuUpdateProgress } from "./SecureDfuUpda
 import * as EspruinoHelper from "./espruino"
 
 const anyWindow = (window as any)
-const blankTag = new Uint8Array(require('arraybuffer-loader!../NTAG215_blank.bin'))
 const puck = anyWindow.puck = new Puck(console.log, console.warn, console.error)
 
 $(() => {
