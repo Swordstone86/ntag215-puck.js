@@ -1,3 +1,4 @@
+import { RegisterEspruinoTerser } from "./EspruinoTerser"
 import { hideModal } from "./modal"
 
 // tslint:disable-next-line: variable-name
@@ -48,7 +49,8 @@ require("!espruino-loader!espruino/core/flasher.js")
 //require("!espruino-loader!espruino/plugins/assembler.js")
 require("!espruino-loader!espruino/plugins/getGitHub.js")
 require("!espruino-loader!espruino/plugins/unicode.js")
-require("!espruino-loader!espruino/plugins/minify.js")
+RegisterEspruinoTerser(Espruino)
+//require("!espruino-loader!espruino/plugins/minify.js")
 require("!espruino-loader!espruino/plugins/pretokenise.js")
 require("!espruino-loader!espruino/plugins/saveOnSend.js")
 require("!espruino-loader!espruino/plugins/setTime.js")
@@ -70,7 +72,8 @@ export interface SemVer {
 }
 
 export interface GetCodeOptions {
-  saveToFlash?: boolean
+  saveToFlash?: boolean,
+  board?: string
 }
 
 export function isConnected(): boolean {
@@ -119,12 +122,21 @@ export async function getNtagVersion(): Promise<SemVer> {
 
 export function getCode(options: GetCodeOptions = {}): Promise<string> {
   return new Promise((resolve, reject) => {
-    const { saveToFlash = false } = options
-    let code = $("#code").text()
+    const {
+      saveToFlash = false, board = undefined
+    } = options
+    let code = $("#code").val()
 
     code = code.replace(
       /(const SAVE_TO_FLASH = )(true|false);/,
       `$1${saveToFlash};`)
+
+    if (board) {
+      code = code.replace(
+        /(const BOARD = )(process\.env\.BOARD);/,
+        `$1${JSON.stringify(board)};`
+      )
+    }
 
     Espruino.callProcessor("transformForEspruino", code, resolve)
   })

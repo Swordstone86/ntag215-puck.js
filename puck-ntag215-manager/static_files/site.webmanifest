@@ -1,6 +1,6 @@
 {
-    "name": "NTAG215",
-    "short_name": "NTAG215",
+    "name": "Puck NTAG215 Management",
+    "short_name": "ntag215-puck.js",
     "icons": [
         {
             "src": "./android-chrome-192x192.png",
@@ -13,7 +13,7 @@
             "type": "image/png"
         }
     ],
-    "theme_color": "#ffffff",
-    "background_color": "#ffffff",
+    "theme_color": "#272b30",
+    "background_color": "#272b30",
     "display": "standalone"
 }

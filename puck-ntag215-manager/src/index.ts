@@ -316,7 +316,8 @@ $(() => {
       })
 
       await EspruinoHelper.writeCode({
-        saveToFlash: modalResult === ModalResult.ButtonYes
+        saveToFlash: modalResult === ModalResult.ButtonYes,
+        board: JSON.parse(await EspruinoHelper.executeExpression("process.env.BOARD"))
       })
 
       EspruinoHelper.close()

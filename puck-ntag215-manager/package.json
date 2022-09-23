@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "build": "del-cli ./node_modules/.cache/dist-temp && webpack --mode=production && del-cli ./dist && move-cli ./node_modules/.cache/dist-temp ./dist && cpy \"./static_files/*\" ./dist",
-    "build-dev": "del-cli ./node_modules/.cache/dist-temp && webpack --mode=development && del-cli ./dist && move-cli ./node_modules/.cache/dist-temp ./dist && cpy  \"./static_files/*\" ./dist",
+    "build": "del-cli ./node_modules/.cache/dist-temp && webpack --mode=production && del-cli ./dist && move-cli ./node_modules/.cache/dist-temp ./dist && cpy \"./static_files/*\" ./dist && cpy \"./static_files/img/*\" ./dist/img",
+    "build-dev": "del-cli ./node_modules/.cache/dist-temp && webpack --mode=development && del-cli ./dist && move-cli ./node_modules/.cache/dist-temp ./dist && cpy  \"./static_files/*\" ./dist && cpy \"./static_files/img/*\" ./dist/img",
     "build-watch": "del-cli ./node_modules/.cache/dist-temp && del-cli ./dist && mkdir dist && cpy  \"./static_files/*\" ./dist && webpack --mode=development --watch"
   },
   "devDependencies": {
@@ -37,7 +37,7 @@
     "escodegen": "^1.8.0",
     "esmangle": "^1.0.1",
     "espruino": "^0.1.45",
-    "espruino-loader": "^1.2.2",
+    "espruino-loader": "^1.2.3",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^4.5.2",
     "jquery": "^3.6.1",
@@ -53,6 +53,7 @@
     "pug-loader": "github:DanTheMan827/pug-loader",
     "sass": "^1.54.8",
     "sass-loader": "^10.3.1",
+    "terser": "^5.15.0",
     "tslint": "^6.1.3",
     "typescript": "^4.8.2",
     "web-bluetooth-dfu": "^1.2.1",
